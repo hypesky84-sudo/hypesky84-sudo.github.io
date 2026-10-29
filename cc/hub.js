@@ -97,6 +97,26 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   show(link.dataset.app, link.dataset.search || '');
 });
+// An email account on the home screen: open Mailroom showing that account's inbox.
+function openAccount(email) {
+  const f = frames.get('mail');
+  let ready = false;
+  try { ready = f?.contentDocument?.readyState === 'complete'; } catch { /* not ready */ }
+  if (ready) {
+    show('mail');
+    tell(f, 'account', { email });
+  } else {
+    show('mail', `?account=${encodeURIComponent(email)}`);
+  }
+}
+document.addEventListener('click', (e) => {
+  const row = e.target.closest('#home [data-account]');
+  if (row) openAccount(row.dataset.account);
+});
+document.addEventListener('keydown', (e) => {
+  const row = e.target.closest?.('#home [data-account]');
+  if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openAccount(row.dataset.account); }
+});
 // An app can ask to be shown (for example when you click a Mailroom pop-up).
 window.addEventListener('message', (e) => {
   if (e.origin !== location.origin || e.data?.cc !== 'show') return;
@@ -172,7 +192,8 @@ const RENDER = {
     const important = s.important.length ? `<div class="callout bad"><b>Important email (${s.important.length})</b><ul>${s.important.slice(0, 5).map((x) =>
       `<li><span class="who">${esc(x.from)}</span> — ${esc(x.subject)}</li>`).join('')}</ul></div>` : '';
     const reconnect = s.reconnect.length ? `<div class="callout warn"><b>Needs to be reconnected</b>${s.reconnect.map(esc).join(', ')}</div>` : '';
-    const rows = s.accounts.map((x) => `<li><span class="dot" style="background:${esc(x.color || '#888')}"></span>
+    // Each account opens Mailroom on that account's inbox.
+    const rows = s.accounts.map((x) => `<li class="link" role="link" tabindex="0" data-account="${esc(x.email)}" title="Open ${esc(x.email)} in Mailroom"><span class="dot" style="background:${esc(x.color || '#888')}"></span>
       <span class="who">${esc(x.name || x.email)}${x.name ? `<span class="sub">${esc(x.email)}</span>` : ''}</span>
       <span class="num${x.unread ? '' : ' zero'}">${x.error ? '—' : x.unread ? `${x.unread} unread` : 'All read'}</span></li>`).join('');
     return cardShell(a, `${important}${reconnect}

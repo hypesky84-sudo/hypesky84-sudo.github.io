@@ -121,6 +121,9 @@ button { font: inherit; }
 .rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-soft); }
 .rows li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line-soft); min-width: 0; }
 .rows li:last-child { border-bottom: 0; }
+.rows li.link { cursor: pointer; margin: 0 -8px; padding-left: 8px; padding-right: 8px; border-radius: 6px; }
+.rows li.link:hover { background: var(--line-soft); }
+.rows li.link:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .rows .who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rows .sub { display: block; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rows .num { font-variant-numeric: tabular-nums; font-weight: 700; }
