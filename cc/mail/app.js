@@ -292,6 +292,17 @@ function showAccountByEmail(email) {
   if (S.view !== 'compose') showEmptyReader();
   afterScopeChange();
 }
+// "#account=someone@x.com" in the address (from Control Center's home screen). Read once, then removed.
+function hashAccount() {
+  const m = location.hash.match(/^#account=(.+)$/);
+  if (!m) return null;
+  history.replaceState(null, '', location.pathname + location.search);
+  try { return decodeURIComponent(m[1]); } catch { return null; }
+}
+window.addEventListener('hashchange', () => {
+  const email = hashAccount();
+  if (email && S.accounts.length) showAccountByEmail(email);
+});
 // ---------- putting accounts in your own order ----------
 async function saveAccountOrder(ids) {
   const before = S.accounts;
@@ -3114,7 +3125,7 @@ async function checkVersion() {
 
 async function init() {
   const params = new URLSearchParams(location.search);
-  const startAccount = params.get('account'); // opened from an account on Control Center's home screen
+  const startAccount = hashAccount(); // opened from an account on Control Center's home screen
   if (params.get('connected')) toast(`Connected ${params.get('connected')}`);
   if (params.get('authError')) toast(params.get('authError'), { error: true, timeout: 12000 });
   if (params.size) history.replaceState(null, '', location.pathname);
