@@ -3,7 +3,7 @@
 
 // Must match MAILROOM_VERSION in apps/mailroom/index.js. When they differ, the black
 // Control Center window is still running an older copy of the program and needs restarting.
-const APP_VERSION = '2.16.0';
+const APP_VERSION = '2.17.0';
 
 // ---------- tiny helpers ----------
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -1338,20 +1338,19 @@ async function messageAction(act, m = S.cur && S.msgs.find((x) => keyOf(x) === k
     if (!results.some(Boolean)) return;
   }
   const undoable = fromFolder === 'inbox' && ['archive', 'trash', 'spam'].includes(act);
+  // Reporting junk also sends everything from that sender to junk from now on (no need to ask).
+  const toBlock = act === 'spam' ? blockable([target.from?.email]) : [];
+  const blocking = autoBlock(toBlock);
   const actions = [];
   if (undoable) {
     actions.push({
       label: 'Undo',
       fn: async () => {
+        await unblockQuietly(await blocking);
         const back = await Promise.all(members.map((x, i) => (results[i] ? runAction({ ...x, id: results[i].id || x.id }, 'inbox') : null)));
         if (back.some(Boolean)) { toast('Moved back to inbox'); loadList({ keep: true }); }
       },
     });
-  }
-  // Junk moves one email. This offers to junk everything from that sender from now on.
-  const sender = (target.from?.email || '').toLowerCase();
-  if (act === 'spam' && sender && !myAddresses().has(sender) && !S.blockedSenders.includes(sender)) {
-    actions.push({ label: `Always junk mail from ${sender}`, fn: () => blockSender(sender) });
   }
   let done = DONE[act] || 'Done';
   if (act === 'inbox' && results.some((r) => r?.reported)) done = 'Marked as not junk and moved to Inbox';
@@ -1361,8 +1360,40 @@ async function messageAction(act, m = S.cur && S.msgs.find((x) => keyOf(x) === k
     done = reported
       ? (outlook ? 'Reported as junk to Microsoft and moved to Junk' : 'Reported as spam to Google and moved to Spam')
       : (outlook ? 'Moved to Junk (Microsoft’s report wasn’t available just now)' : 'Moved to Spam');
+    if (toBlock.length) done += `. Future mail from ${toBlock[0]} goes straight to junk`;
   }
   toast(done, { actions, timeout: act === 'spam' ? 12000 : 6000 });
+}
+
+// Senders that reporting junk should block: not you, not an important sender, not already blocked.
+function blockable(emails) {
+  const mine = myAddresses();
+  const important = (e) => S.importantSenders.some((rule) => {
+    const r = String(rule).toLowerCase().trim().replace(/^@/, '');
+    return r && (r.includes('@') ? e === r : e.endsWith(`@${r}`) || e.endsWith(`.${r}`));
+  });
+  return [...new Set(emails.map((e) => String(e || '').toLowerCase().trim()))]
+    .filter((e) => e && !mine.has(e) && !important(e) && !S.blockedSenders.includes(e));
+}
+
+// Adds senders to the blocked list without asking. Mailroom then also moves their other
+// inbox emails to junk. Returns the senders that were added (so Undo can take them off).
+async function autoBlock(senders) {
+  if (!senders.length) return [];
+  try {
+    const st = await api('POST', '/mail/api/notify/blocked', { add: senders });
+    S.blockedSenders = st.blockedSenders;
+    if (st.moved) loadList({ keep: true });
+    if (S.view === 'settings') renderBlockedList();
+    return senders;
+  } catch (e) { toast(e.message, { error: true }); return []; }
+}
+
+async function unblockQuietly(senders) {
+  for (const s of senders) {
+    try { S.blockedSenders = (await api('POST', '/mail/api/notify/blocked', { remove: s })).blockedSenders; } catch { /* stays blocked */ }
+  }
+  if (S.view === 'settings') renderBlockedList();
 }
 
 async function blockSender(rule) {
@@ -3235,30 +3266,24 @@ async function bulkAction(act) {
   const failed = results.filter((r) => !r).length;
   if (failed) loadList({ keep: true });
 
+  // Reporting junk also sends everything from those senders to junk from now on (no need to ask).
+  const toBlock = act === 'spam' ? blockable(members.filter((x, i) => results[i]).map((x) => x.from?.email)) : [];
+  const blocking = autoBlock(toBlock);
   const actions = [];
   if (fromFolder === 'inbox' && ['archive', 'trash', 'spam'].includes(act)) {
     actions.push({
       label: 'Undo',
       fn: async () => {
+        await unblockQuietly(await blocking);
         await inBatches(members, (x, i) => (results[i] ? runAction({ ...x, id: results[i].id || x.id }, 'inbox', { quiet: true }) : null));
         toast('Moved back to inbox');
         loadList({ keep: true });
       },
     });
   }
-  if (act === 'spam') {
-    const mine = myAddresses();
-    const senders = [...new Set(members.map((x) => (x.from?.email || '').toLowerCase()))]
-      .filter((s) => s && !mine.has(s) && !S.blockedSenders.includes(s));
-    if (senders.length) {
-      actions.push({
-        label: senders.length === 1 ? `Always junk mail from ${senders[0]}` : `Always junk mail from these ${senders.length} senders`,
-        fn: async () => { for (const s of senders) await blockSender(s); },
-      });
-    }
-  }
   const verb = { archive: 'Archived', trash: 'Deleted', spam: isOutlookOnly() ? 'Reported as junk' : 'Reported as spam', inbox: 'Moved to inbox' }[act] || 'Done';
-  const msg = failed ? `${verb} ${n - Math.min(n, failed)} of ${n} ${word}. Some couldn’t be changed; the list was refreshed.` : `${verb} ${n} ${word}`;
+  let msg = failed ? `${verb} ${n - Math.min(n, failed)} of ${n} ${word}. Some couldn’t be changed; the list was refreshed.` : `${verb} ${n} ${word}`;
+  if (toBlock.length) msg += `. Future mail from ${toBlock.length === 1 ? toBlock[0] : `these ${toBlock.length} senders`} goes straight to junk`;
   toast(msg, { actions, error: !!failed && failed >= members.length, timeout: act === 'spam' || actions.length ? 12000 : 6000 });
 }
 
