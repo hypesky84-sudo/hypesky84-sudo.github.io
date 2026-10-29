@@ -277,6 +277,21 @@ $('#accountList').addEventListener('click', (e) => {
   closeNav();
   afterScopeChange();
 });
+
+// Control Center's home screen: you clicked an account there, so show that account's inbox.
+function showAccountByEmail(email) {
+  const a = S.accounts.find((x) => x.email.toLowerCase() === String(email || '').toLowerCase());
+  if (!a) return;
+  if (a.needsReconnect) { reconnect(a); return; }
+  ackAccount(a.id);
+  S.folder = 'inbox';
+  S.scope = a.id;
+  S.q = '';
+  $('#search').value = '';
+  closeNav();
+  if (S.view !== 'compose') showEmptyReader();
+  afterScopeChange();
+}
 // ---------- putting accounts in your own order ----------
 async function saveAccountOrder(ids) {
   const before = S.accounts;
@@ -3099,6 +3114,7 @@ async function checkVersion() {
 
 async function init() {
   const params = new URLSearchParams(location.search);
+  const startAccount = params.get('account'); // opened from an account on Control Center's home screen
   if (params.get('connected')) toast(`Connected ${params.get('connected')}`);
   if (params.get('authError')) toast(params.get('authError'), { error: true, timeout: 12000 });
   if (params.size) history.replaceState(null, '', location.pathname);
@@ -3116,7 +3132,7 @@ async function init() {
     return;
   }
   showEmptyReader();
-  loadList();
+  if (startAccount) showAccountByEmail(startAccount); else loadList();
   refreshUnread();
   checkVersion();
   await migrateOldSettings();
@@ -3146,6 +3162,7 @@ $('#soundBtn').addEventListener('click', () => setSound(!S.soundOn));
 // right away), and when the page is shown again after using another app.
 window.addEventListener('message', (e) => {
   if (e.origin !== location.origin || e.data?.cc !== 'event') return;
+  if (e.data.type === 'account') { showAccountByEmail(e.data.data?.email); return; }
   if (!usable().length) return;
   if (e.data.type === 'mail') pollNotify();
   if (e.data.type === 'shown') {
