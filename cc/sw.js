@@ -39,14 +39,22 @@ self.addEventListener('push', (e) => {
 });
 
 // Tapping an alert opens Control Center on the right app (Mailroom, Compliance).
+// Only the main Control Center window is used, never one of the apps inside it (Mailroom etc.):
+// sending an app's panel to Control Center loaded Control Center inside itself.
+self.ccOpen = async (path) => {
+  const url = new URL(path || './', self.registration.scope).href;
+  const home = new URL(self.registration.scope).pathname;
+  const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const main = open.find((c) => c.frameType !== 'nested' && new URL(c.url).pathname === home);
+  if (main) {
+    await main.focus().catch(() => {});
+    main.postMessage({ cc: 'open', app: new URL(url).hash.slice(1) });
+    return 'switched';
+  }
+  await self.clients.openWindow(url);
+  return 'opened';
+};
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  const url = new URL(e.notification.data?.url || './', self.registration.scope).href;
-  e.waitUntil((async () => {
-    const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const c of open) {
-      if (c.url.startsWith(self.registration.scope)) { await c.focus(); return c.navigate(url).catch(() => {}); }
-    }
-    return self.clients.openWindow(url);
-  })());
+  e.waitUntil(self.ccOpen(e.notification.data?.url));
 });

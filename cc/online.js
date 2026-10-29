@@ -3,7 +3,11 @@
 // checks it on every request.
 (() => {
   'use strict';
-  const URL_ = 'https://vzbxtbipabwyuvqvjoxx.supabase.co';
+  // Safety net: Control Center should never be shown inside one of its own app panels.
+  if (window.top !== window) {
+    try { if (window.top.location.origin === location.origin) { window.top.location.replace(location.href); return; } } catch { /* other site */ }
+  }
+  const URL_ ='https://vzbxtbipabwyuvqvjoxx.supabase.co';
   const KEY = 'sb_publishable_i5hsg3cHLaoecoMKWhdGaQ_JsudO1QF';
   const sb = window.supabase.createClient(URL_, KEY, {
     auth: { persistSession: true, autoRefreshToken: true, storageKey: 'cc-auth' },
@@ -139,5 +143,12 @@
     if (data?.session) go(data.session); else showLogin();
   });
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    // You tapped an alert while Control Center was open: switch to the right app.
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      const app = e.data?.cc === 'open' ? String(e.data.app || '') : '';
+      if (/^[a-z]+$/.test(app)) location.hash = app;
+    });
+  }
 })();
