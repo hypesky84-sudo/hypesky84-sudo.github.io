@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driver MVRs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="mvr.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="side" aria-label="Drivers">
+      <div class="side-head">
+        <h1>Driver MVRs</h1>
+        <button class="icon-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings"></button>
+      </div>
+      <button class="btn primary upload-btn" id="uploadBtn" type="button"></button>
+      <input type="file" id="fileInput" accept="application/pdf,image/jpeg,image/png,image/webp" multiple hidden>
+      <input class="search" id="search" type="search" placeholder="Find a driver" aria-label="Find a driver" autocomplete="off">
+      <ul class="drivers" id="drivers"></ul>
+    </aside>
+    <main class="main" id="main"></main>
+  </div>
+  <div class="drop-veil" id="veil" hidden><div>Drop the MVR to read it</div></div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+  <script src="../cloud.js"></script>
+<script type="module" src="mvr.js"></script>
+</body>
+</html>
