@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mailroom</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <nav class="sidebar" id="sidebar" aria-label="Mailboxes">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="7" width="26" height="18" rx="3"/><path d="M4 9l12 9 12-9"/></svg>
+        <span>Mailroom</span>
+      </div>
+      <button class="btn primary compose-btn" id="composeBtn" type="button">Write a message</button>
+      <ul class="nav-list" id="folders"></ul>
+      <h2 class="side-heading">Accounts</h2>
+      <ul class="nav-list" id="accountList"></ul>
+      <div class="side-foot">
+        <button class="nav-item" id="soundBtn" type="button"></button>
+        <button class="nav-item" id="settingsBtn" type="button"></button>
+      </div>
+    </nav>
+    <div class="scrim" id="scrim"></div>
+
+    <section class="list-pane" aria-label="Messages">
+      <div class="alert-bar" id="alertBar" role="alert" hidden></div>
+      <header class="list-head">
+        <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Show mailboxes"></button>
+        <form id="searchForm" class="search" role="search">
+          <input type="search" id="search" placeholder="Search mail" aria-label="Search mail" autocomplete="off">
+        </form>
+        <button class="icon-btn" id="refreshBtn" type="button" aria-label="Check for new mail" title="Check for new mail"></button>
+      </header>
+      <div class="list-title">
+        <h1 id="listTitle">Inbox</h1>
+        <span id="listMeta" class="muted"></span>
+        <button class="order-toggle" id="orderBtn" type="button"></button>
+      </div>
+      <div class="bulk-bar" id="bulkBar" role="toolbar" aria-label="Selected emails" hidden></div>
+      <div class="list" id="list" role="listbox" aria-label="Messages" tabindex="0"></div>
+    </section>
+
+    <main class="reader" id="reader"></main>
+  </div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+  <datalist id="addressBook"></datalist>
+  <script src="../cloud.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

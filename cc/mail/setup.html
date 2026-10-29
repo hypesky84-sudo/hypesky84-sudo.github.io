@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mailroom setup guide</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+  <link rel="stylesheet" href="app.css">
+  <style>
+    body { overflow-y: auto; }
+    .guide { max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; }
+    .guide h1 { font-size: 28px; letter-spacing: -.02em; margin: 0 0 8px; }
+    .guide h2 { font-size: 21px; margin: 44px 0 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .guide h3 { font-size: 16px; margin: 26px 0 6px; }
+    .guide p, .guide li { max-width: 68ch; }
+    .guide ol { padding-left: 1.4em; }
+    .guide li { margin: 8px 0; }
+    .guide code { padding: 1px 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--line-soft); font-size: 14px; overflow-wrap: anywhere; }
+    .guide .tip { padding: 12px 14px; border-radius: 6px; background: var(--accent-soft); margin: 14px 0; }
+    .guide .caution { padding: 12px 14px; border-radius: 6px; background: color-mix(in srgb, var(--danger) 12%, var(--surface)); margin: 14px 0; }
+    .guide nav a { margin-right: 16px; }
+  </style>
+</head>
+<body>
+  <div class="guide">
+    <h1>Connecting your accounts</h1>
+    <p>Google and Microsoft only let a mail program into your account if it has its own “keys.” Big apps like Outlook have theirs built in. Mailroom runs on your computer just for you, so you make your own keys once. They’re free, and Mailroom keeps them on your computer.</p>
+    <p>Each setup takes about 10 minutes. You only do it once per provider. After that, you can connect as many Gmail or Outlook addresses as you like.</p>
+    <nav><a href="#google">Gmail setup</a><a href="#microsoft">Outlook setup</a><a href="#help">If something goes wrong</a></nav>
+
+    <h2 id="google">Gmail</h2>
+    <p>Have Mailroom open in another tab. You’ll copy two keys from Google into <b>Settings and accounts</b>.</p>
+
+    <h3>1. Create a project</h3>
+    <ol>
+      <li>Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> and sign in with your Gmail account. Accept the terms if Google asks.</li>
+      <li>At the top left, click the project picker (it may say “Select a project”), then <b>New project</b>.</li>
+      <li>Name it <code>Mailroom</code> and click <b>Create</b>. When it finishes, make sure Mailroom is the selected project.</li>
+    </ol>
+
+    <h3>2. Turn on Gmail access</h3>
+    <ol>
+      <li>Open <a href="https://console.cloud.google.com/apis/library/gmail.googleapis.com" target="_blank" rel="noopener">the Gmail API page</a>.</li>
+      <li>Click <b>Enable</b>.</li>
+    </ol>
+
+    <h3>3. Describe your app</h3>
+    <ol>
+      <li>Open <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> and click <b>Get started</b>.</li>
+      <li>App name: <code>Mailroom</code>. User support email: your Gmail address. Click <b>Next</b>.</li>
+      <li>Audience: choose <b>External</b>. Click <b>Next</b>.</li>
+      <li>Contact information: your Gmail address. Click <b>Next</b>, tick the agreement, then <b>Create</b>.</li>
+    </ol>
+
+    <h3>4. Add yourself as a tester</h3>
+    <ol>
+      <li>In the left menu, open <b>Audience</b>.</li>
+      <li>Under <b>Test users</b>, click <b>Add users</b> and enter every Gmail address you plan to connect. Click <b>Save</b>.</li>
+    </ol>
+
+    <h3>5. Make the keys</h3>
+    <ol>
+      <li>In the left menu, open <b>Clients</b>, then <b>Create client</b>.</li>
+      <li>Application type: <b>Web application</b>. Name: <code>Mailroom</code>.</li>
+      <li>Under <b>Authorized redirect URIs</b>, click <b>Add URI</b> and paste exactly:<br><code>http://localhost:4777/auth/google/callback</code></li>
+      <li>Click <b>Create</b>. Google shows a <b>Client ID</b> and a <b>Client secret</b>. Copy both now, or click <b>Download JSON</b>. Google may not show the secret again.</li>
+    </ol>
+
+    <h3>6. Connect</h3>
+    <ol>
+      <li>In Mailroom, open <b>Settings and accounts</b>. Under Gmail, paste the Client ID and Client secret, then click <b>Save keys</b>.</li>
+      <li>Click <b>Connect a Gmail account</b> and sign in.</li>
+      <li>Google warns that it <b>hasn’t verified this app</b>. That’s expected, because you made the app yourself. Click <b>Continue</b>.</li>
+      <li>On the permissions screen, tick <b>every box</b> and click <b>Continue</b>. Your inbox appears in Mailroom.</li>
+    </ol>
+    <div class="caution">
+      <p style="margin:0"><b>Gmail asks you to reconnect about once a week.</b> Google does this for apps in “testing.” When it happens, Mailroom marks the account with a <b>!</b>. Click it, or click <b>Reconnect</b> in Settings, and sign in again.</p>
+    </div>
+    <div class="tip">
+      <p style="margin:0 0 6px"><b>Optional: stop the weekly sign-in.</b> Google only lets you publish after the <b>Branding</b> page has three links on a website you own: a <b>home page</b>, a <b>privacy policy</b> and <b>terms of service</b>. Your website’s domain (for example <code>yourcompany.com</code>) must also be listed under <b>Authorized domains</b>. Google doesn’t accept <code>localhost</code>. Until those are in, <b>Publish app</b> stays grayed out.</p>
+      <p style="margin:0 0 6px">Once they’re saved, open <b>Audience</b> and click <b>Publish app</b>. You’ll still see the “hasn’t verified this app” warning when you connect, and only 100 people can ever use it.</p>
+      <p style="margin:0">If you don’t have a website, stay in Testing. Reconnecting once a week takes a few seconds.</p>
+    </div>
+
+    <h2 id="microsoft">Outlook, Hotmail and Microsoft 365</h2>
+
+    <h3>Before you start</h3>
+    <p>Microsoft only lets you make keys inside a “directory” (also called a tenant). Work and school accounts already have one. Personal Outlook.com and Hotmail accounts might not.</p>
+    <ul>
+      <li><b>Personal account:</b> sign in at the link in step 1. If Microsoft says you don’t have access or a directory, create a free Azure account at <a href="https://azure.microsoft.com/free" target="_blank" rel="noopener">azure.microsoft.com/free</a> with the same Microsoft account, then come back. Microsoft asks for a card to confirm who you are. Making keys is free.</li>
+      <li><b>Work or school account:</b> your IT department may block app registration or ask to approve the app. If you see “Need admin approval,” send them this guide.</li>
+    </ul>
+
+    <h3>1. Register the app</h3>
+    <ol>
+      <li>Go to <a href="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" rel="noopener">App registrations in Microsoft Entra</a> and sign in.</li>
+      <li>Click <b>New registration</b>.</li>
+      <li>Name: <code>Mailroom</code>.</li>
+      <li>Supported account types: choose <b>Accounts in any organizational directory and personal Microsoft accounts</b>. This lets you connect Outlook.com, Hotmail and work addresses.</li>
+      <li>Under Redirect URI, pick <b>Web</b> and paste exactly:<br><code>http://localhost:4777/auth/microsoft/callback</code></li>
+      <li>Click <b>Register</b>.</li>
+      <li>On the page that opens, copy the <b>Application (client) ID</b>. That’s your Client ID.</li>
+    </ol>
+
+    <h3>2. Make a secret</h3>
+    <ol>
+      <li>In the left menu, open <b>Certificates &amp; secrets</b>, then <b>New client secret</b>.</li>
+      <li>Description: <code>Mailroom</code>. For Expires, choose the longest option offered.</li>
+      <li>Click <b>Add</b>, then copy the <b>Value</b> right away. Don’t copy the Secret ID. Microsoft hides the value once you leave the page.</li>
+    </ol>
+    <div class="tip"><p style="margin:0">Write down the expiry date. When it passes, Outlook accounts stop working until you make a new secret and paste it into Mailroom under <b>Change keys</b>.</p></div>
+
+    <h3>3. Allow mail access</h3>
+    <ol>
+      <li>In the left menu, open <b>API permissions</b>, then <b>Add a permission</b>, then <b>Microsoft Graph</b>, then <b>Delegated permissions</b>.</li>
+      <li>Search for and tick <code>Mail.ReadWrite</code>, <code>Mail.Send</code>, <code>offline_access</code> and <code>User.Read</code>. Click <b>Add permissions</b>.</li>
+    </ol>
+
+    <h3>4. Connect</h3>
+    <ol>
+      <li>In Mailroom, open <b>Settings and accounts</b>. Under Outlook, paste the Client ID and the secret Value, then click <b>Save keys</b>.</li>
+      <li>Click <b>Connect an Outlook account</b>, sign in, and click <b>Accept</b>.</li>
+    </ol>
+
+    <h2 id="help">If something goes wrong</h2>
+    <dl>
+      <dt><b>“redirect_uri_mismatch” or “The redirect URI … does not match”</b></dt>
+      <dd>The redirect address in Google or Microsoft has to match exactly: <code>http</code> (not https), <code>localhost</code>, port <code>4777</code>, and no slash at the end.</dd>
+      <dt><b>“Access blocked: Mailroom has not completed the Google verification process”</b></dt>
+      <dd>Add your address under <b>Audience</b>, then <b>Test users</b>, in Google Auth Platform.</dd>
+      <dt><b>“invalid_client” or “Invalid client secret”</b></dt>
+      <dd>The secret was copied wrong. For Microsoft, copy the <b>Value</b>, not the Secret ID. Paste it again under <b>Change keys</b>.</dd>
+      <dt><b>An account shows a red !</b></dt>
+      <dd>Its sign-in expired. Click it and sign in again. Your settings and signature are kept.</dd>
+      <dt><b>Mailroom won’t open</b></dt>
+      <dd>Make sure the black Control Center window is still open. If you closed it, double-click the start file again.</dd>
+    </dl>
+    <p><a href="/?app=mail">Back to Mailroom</a></p>
+  </div>
+</body>
+</html>
