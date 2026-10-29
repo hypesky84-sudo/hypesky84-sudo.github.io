@@ -106,7 +106,8 @@ function openAccount(email) {
     show('mail');
     tell(f, 'account', { email });
   } else {
-    show('mail', `?account=${encodeURIComponent(email)}`);
+    // After "#", so the address never leaves this device (it isn't sent to any server).
+    show('mail', `#account=${encodeURIComponent(email)}`);
   }
 }
 document.addEventListener('click', (e) => {
