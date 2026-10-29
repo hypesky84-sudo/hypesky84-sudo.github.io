@@ -1,0 +1,19 @@
+/* Control Center online: the login screen and the log-out button (same colors as the home screen). */
+#cc-login { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px 16px; background: var(--bg); }
+#cc-login[hidden] { display: none; }
+body.cc-locked .shell { visibility: hidden; }
+.login-card { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c-home); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px 22px 18px; display: flex; flex-direction: column; gap: 4px; }
+.login-brand { display: flex; align-items: center; gap: 10px; font-size: 19px; margin-bottom: 4px; }
+.login-brand svg { width: 30px; height: 30px; fill: none; stroke: var(--ink-2); stroke-width: 2; }
+.login-brand svg .fill { fill: var(--c-home); stroke: var(--c-home); }
+.login-hint { margin: 0 0 8px; color: var(--muted); font-size: 14px; }
+.login-card label { display: block; margin: 8px 0; font-size: 14px; color: var(--ink-2); }
+.login-card input { display: block; width: 100%; margin-top: 5px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font: inherit; font-size: 16px; color: var(--ink); }
+.login-card input:focus { outline: 2px solid var(--focus); outline-offset: 0; border-color: transparent; }
+.login-card .btn.primary { --app: var(--c-home); justify-content: center; padding: 11px; margin-top: 8px; font-size: 15px; }
+.login-msg { min-height: 1em; margin: 8px 0 0; font-size: 14px; color: var(--bad); }
+.login-msg.ok { color: var(--ok); }
+.login-switch { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 6px 0; font-size: 14px; text-align: left; }
+.logout-btn { margin-top: auto; }
+.logout-btn + .collapse-btn { margin-top: 0; }
+@media (max-width: 760px) { .logout-btn { display: none; } }

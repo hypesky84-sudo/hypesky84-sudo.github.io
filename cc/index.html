@@ -1,117 +1,51 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#FAF6EE">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Control Center">
-<title>Control Center</title>
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="app.css?v=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Control Center</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+  <link rel="stylesheet" href="hub.css">
+  <link rel="stylesheet" href="online.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#F1EADF">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Control Center">
+  <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
-<div id="app">
-  <!-- Login -->
-  <section id="login" class="screen" hidden>
-    <div class="login-card">
-      <div class="brand"><span class="logo">CC</span><h1>Control Center</h1></div>
-      <p class="muted" id="loginHint">Log in once on this phone. You'll stay logged in.</p>
-      <form id="loginForm" autocomplete="on">
-        <label>Email<input name="email" type="email" autocomplete="username" required inputmode="email"></label>
-        <label>Password<input name="password" type="password" autocomplete="current-password" required minlength="8"></label>
-        <button class="btn primary wide" type="submit" id="loginBtn">Log in</button>
-        <p class="error" id="loginError" hidden></p>
-        <button type="button" class="link" id="toggleSignup">First time? Create your login</button>
-      </form>
-    </div>
-  </section>
+  <div class="shell">
+    <nav class="rail" aria-label="Apps">
+      <a class="brand" href="#home" data-app="home">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="4" width="10" height="10" rx="2.5"/><rect x="18" y="4" width="10" height="10" rx="2.5"/><rect x="4" y="18" width="10" height="10" rx="2.5"/><rect x="18" y="18" width="10" height="10" rx="2.5" class="fill"/></svg>
+        <span>Control Center</span>
+      </a>
+      <ul class="nav" id="nav"></ul>
+      <button class="collapse-btn" id="collapseBtn" type="button" aria-label="Make the menu smaller" title="Make the menu smaller">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span class="label">Hide labels</span>
+      </button>
+      <div class="rail-resize" id="railResize" role="separator" aria-orientation="vertical" aria-label="Drag to resize the menu" title="Drag to resize · double-click to reset"></div>
+    </nav>
 
-  <!-- Inbox -->
-  <section id="list" class="screen" hidden>
-    <header class="bar">
-      <button class="icon-btn" id="menuBtn" aria-label="Folders">☰</button>
-      <div class="bar-title" id="folderTitle">Inbox</div>
-      <button class="icon-btn" id="searchBtn" aria-label="Search">⌕</button>
-      <button class="icon-btn" id="refreshBtn" aria-label="Refresh">↻</button>
-    </header>
-    <form id="searchForm" class="searchbar" hidden>
-      <input name="q" type="search" placeholder="Search all mail" enterkeyhint="search">
-      <button type="button" class="link" id="searchClose">Cancel</button>
-    </form>
-    <div class="chips" id="chips"></div>
-    <div class="notice" id="listNotice" hidden></div>
-    <ul class="messages" id="messages"></ul>
-    <div class="more"><button class="btn" id="moreBtn" hidden>Load more</button></div>
-    <button class="fab" id="composeBtn" aria-label="Write">✎</button>
-  </section>
-
-  <!-- Conversation -->
-  <section id="thread" class="screen" hidden>
-    <header class="bar">
-      <button class="icon-btn" data-back aria-label="Back">‹</button>
-      <div class="bar-title"></div>
-      <button class="icon-btn" data-act="archive" aria-label="Archive" title="Archive">⤓</button>
-      <button class="icon-btn" data-act="trash" aria-label="Delete" title="Delete">🗑</button>
-      <button class="icon-btn" id="threadMore" aria-label="More">⋯</button>
-    </header>
-    <div class="thread-body">
-      <h2 class="subject"></h2>
-      <div id="threadMsgs"></div>
-      <div class="reply-row">
-        <button class="btn" data-reply="reply">↩ Reply</button>
-        <button class="btn" data-reply="replyAll">↩↩ Reply all</button>
-        <button class="btn" data-reply="forward">↪ Forward</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Writing -->
-  <section id="compose" class="screen" hidden>
-    <header class="bar">
-      <button class="icon-btn" id="composeClose" aria-label="Close">✕</button>
-      <div class="bar-title" id="composeTitle">New message</div>
-      <span class="draft-status muted" id="draftStatus"></span>
-      <button class="icon-btn" id="attachBtn" aria-label="Attach">📎</button>
-      <button class="btn primary" id="sendBtn">Send</button>
-    </header>
-    <form id="composeForm" class="compose-form" onsubmit="return false">
-      <label class="row"><span>From</span><select name="from" id="fromSel"></select></label>
-      <label class="row"><span>To</span><input name="to" type="email" multiple autocomplete="off" inputmode="email"><button type="button" class="link" id="ccToggle">Cc/Bcc</button></label>
-      <label class="row cc" hidden><span>Cc</span><input name="cc" type="email" multiple autocomplete="off" inputmode="email"></label>
-      <label class="row cc" hidden><span>Bcc</span><input name="bcc" type="email" multiple autocomplete="off" inputmode="email"></label>
-      <label class="row"><span>Subject</span><input name="subject" autocomplete="off"></label>
-      <div class="atts" id="composeAtts"></div>
-      <div class="editor" id="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message"></div>
-      <div class="quote-opts" id="quoteOpts" hidden>
-        <label><input type="checkbox" name="includeQuote" checked> Include the original message</label>
-        <label id="origAttsOpt" hidden><input type="checkbox" name="includeOriginalAttachments" checked> Include its attachments</label>
-      </div>
-      <input type="file" id="fileInput" multiple hidden>
-    </form>
-  </section>
-
-  <!-- Folder drawer -->
-  <div class="drawer-bg" id="drawerBg" hidden></div>
-  <nav class="drawer" id="drawer" hidden>
-    <div class="brand"><span class="logo">CC</span><b>Mailroom</b></div>
-    <div id="folders"></div>
-    <hr>
-    <button class="drawer-item" id="logoutBtn">Log out of this phone</button>
-    <p class="muted small" id="versionLine"></p>
-  </nav>
-
-  <!-- Action sheet -->
-  <div class="sheet-bg" id="sheetBg" hidden></div>
-  <div class="sheet" id="sheet" hidden></div>
-
-  <div class="toast" id="toast" hidden></div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="app.js?v=1"></script>
+    <main class="stage" id="stage">
+      <section class="home" id="home" aria-labelledby="homeTitle">
+        <header class="home-head">
+          <div>
+            <p class="eyebrow" id="today"></p>
+            <h1 id="homeTitle">Good day</h1>
+          </div>
+          <button class="btn ghost" id="refreshAll" type="button">Refresh</button>
+        </header>
+        <div class="cards" id="cards"></div>
+      </section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="cloud.js"></script>
+  <script src="online.js"></script>
+  <script type="module" src="hub.js"></script>
 </body>
 </html>
