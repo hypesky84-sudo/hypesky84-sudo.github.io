@@ -201,11 +201,13 @@ function badge(state, label) {
   return `<span class="badge ${cls}">${dot} ${label}</span>`;
 }
 
+// Least coverage needed, in thousands: $750K liability for a carrier, a $75K bond for a broker.
+const minCover = (r) => (r.authorityStatus === "Broker" ? 75 : 750);
 function hasIssue(r) {
   if (!r || r.loading || r.error) return true;
   if (!r.authorityActive || !r.dotActive || !r.insuranceOnFile || !r.boc3Filed) return true;
   if (r.cancelRisk === "expired" || r.cancelRisk === "critical") return true;
-  if (r.insuranceOnFile && r.bipdAmount && Number(r.bipdAmount) < 750) return true;
+  if (r.insuranceOnFile && r.bipdAmount && Number(r.bipdAmount) < minCover(r)) return true;
   return false;
 }
 
@@ -256,8 +258,9 @@ function renderTable(data) {
     // Insurance on file
     let insHtml = badge(r.insuranceOnFile?"ok":"fail", r.insuranceOnFile?"On file":"Missing");
     if (r.insuranceOnFile && r.bipdAmount) {
-      const low = Number(r.bipdAmount) < 750;
-      insHtml += `<span class="ins-amt${low ? " ins-low" : ""}">$${Number(r.bipdAmount).toLocaleString()}K${low ? " · below $750K" : ""}</span>`;
+      const low = Number(r.bipdAmount) < minCover(r);
+      const what = r.authorityStatus === "Broker" ? " bond" : "";
+      insHtml += `<span class="ins-amt${low ? " ins-low" : ""}">$${Number(r.bipdAmount).toLocaleString()}K${what}${low ? ` · below $${minCover(r)}K` : ""}</span>`;
     }
     if (!r.insuranceOnFile && r.bipdRequired) insHtml += `<span class="auth-type" style="color:var(--bad)">Required but missing</span>`;
 
