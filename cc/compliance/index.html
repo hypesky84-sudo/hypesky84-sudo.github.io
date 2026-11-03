@@ -283,7 +283,7 @@ function renderTable(data) {
 
     tr.innerHTML = `
       <td class="co">
-        ${r.name}${staleNote}
+        ${r.name}${staleNote}${r.sourceNote && !r.stale ? `<div class="stale" style="color:var(--muted);font-weight:400" title="Motus doesn’t answer cloud servers, so Control Center online reads the same filings from FMCSA’s public data files (updated once a day).">${r.sourceNote}</div>` : ""}
         ${r.legalName && r.legalName !== r.name.toUpperCase() ? `<div class="legal">${r.legalName}</div>` : ""}
         ${r.city ? `<div class="loc">${r.city}, ${r.state}</div>` : ""}
       </td>
