@@ -94,7 +94,9 @@
   .modal h2 { font-size: 18px; font-weight: 700; }
   .modal p { font-size: 13px; color: var(--ink-2); }
   .co-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; }
-  .co-row { display: grid; grid-template-columns: 1fr 130px 32px; gap: 6px; align-items: center; }
+  .co-row { display: grid; grid-template-columns: 130px 1fr 32px; gap: 6px; align-items: center; }
+  .co-row .lookup-note { grid-column: 2 / 3; font-size: 12px; color: var(--muted); margin: -2px 0 4px 2px; }
+  .co-row .lookup-note.bad { color: var(--warn); }
   .co-row input { font: inherit; background: var(--paper); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); font-size: 14px; padding: 6px 9px; width: 100%; outline: none; }
   .co-row input:focus { border-color: var(--app); box-shadow: 0 0 0 3px var(--app-soft); }
   .co-row input.dot-input { font-variant-numeric: tabular-nums; }
@@ -108,7 +110,7 @@
     .toolbar > div { flex-wrap: wrap; }
     .sub { margin-left: 0; }
   }
-  .col-header { display: grid; grid-template-columns: 1fr 130px 32px; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-2); padding: 0 0 4px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }
+  .col-header { display: grid; grid-template-columns: 130px 1fr 32px; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-2); padding: 0 0 4px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -172,8 +174,8 @@
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeEditor()">
   <div class="modal">
     <h2>✎ Edit Company List</h2>
-    <p>Enter each company's name and USDOT number. Orange border = DOT missing (will show error on fetch).</p>
-    <div class="col-header"><span>Company name</span><span>USDOT #</span><span></span></div>
+    <p>Type a company's USDOT number. Its name is filled in from FMCSA (you can change it). Orange border = DOT missing.</p>
+    <div class="col-header"><span>USDOT #</span><span>Company name</span><span></span></div>
     <div class="co-list" id="co-list"></div>
     <div class="modal-footer">
       <button class="btn" onclick="addRow()">+ Add company</button>
@@ -449,18 +451,45 @@ function addRowData(name="", dot="") {
   row.className = "co-row";
   const safeName = name.replace(/&/g,"&amp;").replace(/"/g,"&quot;");
   row.innerHTML = `
-    <input type="text" placeholder="Company name" value="${safeName}" class="name-input">
-    <input type="text" placeholder="DOT number" value="${dot}" class="dot-input${!dot?" missing":""}">
-    <button class="del" onclick="this.closest('.co-row').remove()" title="Remove">✕</button>`;
-  row.querySelector(".dot-input").addEventListener("input", function() {
+    <input type="text" inputmode="numeric" placeholder="DOT number" value="${dot}" class="dot-input${!dot?" missing":""}">
+    <input type="text" placeholder="Filled in from FMCSA" value="${safeName}" class="name-input">
+    <button class="del" onclick="this.closest('.co-row').remove()" title="Remove">✕</button>
+    <div class="lookup-note" hidden></div>`;
+  const dotEl = row.querySelector(".dot-input");
+  const nameEl = row.querySelector(".name-input");
+  const note = row.querySelector(".lookup-note");
+  // A name you type yourself is never replaced; one filled in from FMCSA follows the DOT number.
+  nameEl.addEventListener("input", () => { nameEl.dataset.auto = ""; });
+  let timer, asked = "";
+  dotEl.addEventListener("input", function() {
     this.classList.toggle("missing", !this.value.trim());
+    clearTimeout(timer);
+    timer = setTimeout(() => lookupName(row), 500);
   });
+  dotEl.addEventListener("change", () => lookupName(row));
+  async function lookupName() {
+    const d = dotEl.value.replace(/\D/g, "");
+    if (d.length < 5 || d === asked || (nameEl.value.trim() && !nameEl.dataset.auto)) return;
+    asked = d;
+    note.hidden = false; note.className = "lookup-note"; note.textContent = "Looking up at FMCSA…";
+    try {
+      const r = await fetch(`${PROXY}/lookup/${d}`);
+      const j = await r.json().catch(() => ({}));
+      if (dotEl.value.replace(/\D/g, "") !== d) return; // the number changed while asking
+      if (!r.ok) throw new Error(j.error || "Couldn’t look it up.");
+      nameEl.value = j.name; nameEl.dataset.auto = "1";
+      note.textContent = [j.legalName && j.legalName.toLowerCase() !== j.name.toLowerCase() ? j.legalName : "", [j.city, j.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ") || "Found at FMCSA";
+    } catch (e) {
+      asked = "";
+      note.className = "lookup-note bad"; note.textContent = e.message;
+    }
+  }
   list.appendChild(row);
   // Focus the DOT field if name is filled but DOT is empty
-  if (name && !dot) row.querySelector(".dot-input").focus();
+  if (name && !dot) dotEl.focus();
 }
 
-function addRow() { addRowData(); setTimeout(()=>document.querySelector(".co-list .co-row:last-child .name-input").focus(),50); }
+function addRow() { addRowData(); setTimeout(()=>document.querySelector(".co-list .co-row:last-child .dot-input").focus(),50); }
 
 async function saveAndClose() {
   const rows = document.querySelectorAll(".co-row");
@@ -468,7 +497,7 @@ async function saveAndClose() {
   rows.forEach(row => {
     const name = row.querySelector(".name-input").value.trim();
     const dot  = row.querySelector(".dot-input").value.trim();
-    if (name) companies.push({ name, dot });
+    if (name || dot) companies.push({ name, dot }); // a DOT number alone is enough: the name comes from FMCSA
   });
   document.getElementById("s-total").textContent = companies.length;
   closeEditor();
@@ -481,6 +510,7 @@ async function saveAndClose() {
     });
     const res = await r.json();
     if (!res.ok) throw new Error(res.error || "save failed");
+    if (Array.isArray(res.companies)) companies = res.companies; // names filled in from FMCSA
     await fetchAll();
   } catch (e) {
     await fetchAll();
